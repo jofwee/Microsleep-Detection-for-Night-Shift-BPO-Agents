@@ -1,0 +1,42 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+build/
+
+# Secrets and local settings
+.env
+.env.*
+!.env.example
+
+# Models and datasets (downloaded, large)
+client/models/*
+!client/models/.gitkeep
+research/datasets/*
+!research/datasets/.gitkeep
+
+# Per-person calibration made with the overlay tool
+client/calibration.local.json
+
+# Supabase local stack
+supabase/.temp/
+supabase/.branches/
+
+# Face templates (biometric data) must never be committed
+*.npz
+profile.local.*
+
+# Client settings (publishable key only, but keep it out of git anyway)
+client/.env
+
+# local assistant settings
+.claude/settings.local.json
+
+# the design skill is its own git repository
+.claude/skills/bryl-minimal-design/

@@ -1,0 +1,33 @@
+{
+  "_about": "What an agent might say on a call. The person running Spike S1 reads these aloud; Whisper's transcript is compared with the text here. Taglish spelling varies between people, so scores use both word and character error rates.",
+  "en": [
+    "Thank you for calling, how may I help you today?",
+    "May I have your account number, please?",
+    "I understand your concern, let me check that for you.",
+    "Please hold for a moment while I look into your account.",
+    "Your refund will be processed within three to five business days.",
+    "Is there anything else I can help you with?",
+    "I apologize for the inconvenience this has caused you.",
+    "For security purposes, can you confirm your full name and birthday?"
+  ],
+  "tl": [
+    "Magandang araw po, ano po ang maitutulong ko sa inyo?",
+    "Pwede ko po bang malaman ang account number ninyo?",
+    "Naiintindihan ko po ang inyong problema, susuriin ko po muna.",
+    "Maghintay lang po kayo sandali habang tinitingnan ko ang account ninyo.",
+    "Maibabalik po ang bayad ninyo sa loob ng tatlo hanggang limang araw.",
+    "May iba pa po ba akong maitutulong sa inyo?",
+    "Humihingi po kami ng paumanhin sa abalang naidulot nito.",
+    "Para po sa seguridad, pakikumpirma po ang buo ninyong pangalan at petsa ng kapanganakan."
+  ],
+  "taglish": [
+    "Hello po, thank you for calling, ano po ang maitutulong ko sa inyo today?",
+    "Pwede ko po bang makuha yung account number ninyo?",
+    "Okay po sir, i-check ko lang po muna yung account niyo.",
+    "Please hold lang po saglit habang chine-check ko yung billing ninyo.",
+    "Yung refund po ninyo ay ma-process within three to five working days.",
+    "Is there anything else po na pwede kong i-assist sa inyo?",
+    "Sorry po sa abala, we will fix this po as soon as possible.",
+    "For verification po, pakisabi lang po yung full name at birthday ninyo."
+  ]
+}

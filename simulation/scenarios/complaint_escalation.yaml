@@ -1,0 +1,23 @@
+id: complaint_escalation
+category: COMPLAINT
+title: Technician never came, third call
+difficulty: 3
+languages: [en, tl, taglish]
+moods: [frustrated, in a hurry]
+customer: "{full_name}, has already taken two days off work waiting for a technician who did not come."
+brief: "A technician was promised for the third time and did not show up. This is your third call about it. You are very upset and want a supervisor and compensation, but you stay on the line if the agent is genuinely helpful."
+facts:
+  full_name: "{full_name}"
+  account_number: "{account_no}"
+  plan: "{plan}"
+  birthdate: "{birthdate}"
+  ticket_number: "TKT-88231"
+  missed_visits: "three scheduled visits, none attended"
+  lost_income: "two days of work"
+  demand: "a supervisor, a firm technician appointment, and a bill credit"
+resolution_steps:
+  - apologise sincerely and stay calm
+  - verify the caller's identity
+  - find the ticket and the missed visits
+  - offer a firm appointment and a bill credit, or escalate to a supervisor
+expected_turns: 10

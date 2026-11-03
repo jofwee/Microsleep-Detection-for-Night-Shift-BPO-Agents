@@ -1,0 +1,21 @@
+id: plan_change
+category: PLAN_CHANGE
+title: Wants a faster plan
+difficulty: 1
+languages: [en, tl, taglish]
+moods: [calm, confused, in a hurry, frustrated]
+customer: "{full_name}, a student whose family now streams and studies online at the same time."
+brief: "The family's internet is too slow now that everyone is home. You want to upgrade to a faster plan and ask about the price, any contract, and when the change takes effect."
+facts:
+  full_name: "{full_name}"
+  account_number: "{account_no}"
+  plan: "{plan}"
+  birthdate: "{birthdate}"
+  budget: "you can afford about 500 pesos more per month"
+  worry: "you do not want a new 2-year lock-in contract"
+resolution_steps:
+  - verify the caller's identity
+  - explain the available faster plans and their prices
+  - explain contract terms honestly
+  - process the upgrade and give the effective date
+expected_turns: 7

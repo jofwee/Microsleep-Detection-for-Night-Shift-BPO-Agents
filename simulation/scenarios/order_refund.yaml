@@ -1,0 +1,23 @@
+id: order_refund
+category: ORDER_REFUND
+title: Order never arrived
+difficulty: 2
+languages: [en, tl, taglish]
+moods: [calm, confused, in a hurry, frustrated]
+customer: "{full_name}, bought a gift online for a family member's birthday."
+brief: "You ordered a gadget online ten days ago and it still has not arrived, though the tracking page says it was delivered. You want to know where it is, or a refund."
+facts:
+  full_name: "{full_name}"
+  account_number: "{account_no}"
+  birthdate: "{birthdate}"
+  order_number: "ORD-55012"
+  item: "a wireless speaker"
+  order_date: "ten days ago"
+  tracking_says: "delivered four days ago, but nobody at home received anything"
+  delivery_area: "{area}"
+resolution_steps:
+  - verify the caller's identity
+  - look up the order and the delivery record
+  - open a missing-parcel investigation
+  - offer a refund or a replacement and explain the timeline
+expected_turns: 8

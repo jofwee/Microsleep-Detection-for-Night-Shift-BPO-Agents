@@ -1,0 +1,22 @@
+id: billing_dispute
+category: BILLING
+title: Charged twice this month
+difficulty: 2
+languages: [en, tl, taglish]
+moods: [calm, confused, in a hurry, frustrated]
+customer: "{full_name}, owns a small sari-sari store and pays a postpaid plan every month."
+brief: "Your latest bill shows the same monthly charge twice. You want one of them removed or refunded. This is the second time it has happened."
+facts:
+  full_name: "{full_name}"
+  account_number: "{account_no}"
+  plan: "{plan}"
+  birthdate: "{birthdate}"
+  billing_month: "October"
+  duplicate_charge: "the monthly plan charge appears twice, on October 3 and again on October 5"
+  paid_via: "credit card"
+resolution_steps:
+  - verify the caller's identity
+  - find the duplicate charge
+  - confirm and file a refund request
+  - give the refund timeline (3 to 5 working days)
+expected_turns: 8

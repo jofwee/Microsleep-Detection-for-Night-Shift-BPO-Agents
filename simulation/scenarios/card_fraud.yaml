@@ -1,0 +1,22 @@
+id: card_fraud
+category: FRAUD
+title: Unrecognised card charges
+difficulty: 3
+languages: [en, tl, taglish]
+moods: [in a hurry, frustrated, confused]
+customer: "{full_name}, just saw several charges on the card that were not theirs and is anxious."
+brief: "You see three charges on your card that you did not make, and you are scared more will follow. You want the card blocked right away and the charges reversed."
+facts:
+  full_name: "{full_name}"
+  account_number: "{account_no}"
+  birthdate: "{birthdate}"
+  card_ending: "4417"
+  suspicious_charges: "three online purchases in the last two hours, about 4,500 pesos in total"
+  still_have_card: "yes, the card is in your wallet"
+  contact_number_on_file: "the mobile number on your account"
+resolution_steps:
+  - verify the caller's identity carefully
+  - block the card immediately
+  - list and dispute the unrecognised charges
+  - explain the replacement card and the investigation timeline
+expected_turns: 9

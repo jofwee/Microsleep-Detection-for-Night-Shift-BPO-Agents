@@ -1,0 +1,3 @@
+mode,frames,mean_ms,median_ms,p95_ms,max_ms,fps_sustained,cpu_percent_of_one_core,memory_mb_peak,meets_15_fps
+detection,450,22.57,20.19,33.54,76.32,44.3,111.0,282.0,1
+detection + identity,450,23.15,19.86,26.86,220.48,43.2,198.0,499.0,1

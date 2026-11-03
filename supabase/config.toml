@@ -1,0 +1,38 @@
+# Settings this repo manages on the HOSTED Supabase project (Thesis).
+#
+# `supabase config push` only writes the properties declared here; everything else is left as it
+# is on the project (check with `supabase config diff` first). The local Docker stack is not used
+# in this project. If you ever want it, regenerate a full file with `supabase init --force`
+# (and keep that one out of `config push`, because its defaults are for local development).
+
+project_id = "thesis_planning"
+
+[auth]
+# Only team leaders create accounts (manage-team function, scripts/create_team.py).
+enable_signup = false
+# Enforced by Supabase Auth itself, so it also holds for anyone calling the API directly.
+minimum_password_length = 12
+password_requirements = "lower_upper_letters_digits"
+
+# Edge Functions verify the caller themselves (supabase auth getUser in _shared/auth.ts), which does
+# not depend on the project's JWT signing-key type, so the platform-level JWT check is off.
+[functions.face-challenge]
+verify_jwt = false
+
+[functions.verify-face]
+verify_jwt = false
+
+[functions.enroll-face]
+verify_jwt = false
+
+[functions.pair-workstation]
+verify_jwt = false
+
+[functions.manage-team]
+verify_jwt = false
+
+[functions.caller-turn]
+verify_jwt = false
+
+[functions.transcribe]
+verify_jwt = false

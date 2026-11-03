@@ -1,0 +1,22 @@
+id: account_access
+category: ACCOUNT_ACCESS
+title: Locked out of the online account
+difficulty: 1
+languages: [en, tl, taglish]
+moods: [calm, confused, in a hurry, frustrated]
+customer: "{full_name}, not very comfortable with apps, usually pays bills at the store."
+brief: "You cannot log in to your online account. After a few wrong passwords the app says the account is locked. You want to get back in to pay a bill that is due tomorrow."
+facts:
+  full_name: "{full_name}"
+  account_number: "{account_no}"
+  plan: "{plan}"
+  birthdate: "{birthdate}"
+  registered_email: "{email}"
+  what_happened: "typed the password wrong three times, then the account locked"
+  security_answer: "your first pet was named Bantay"
+resolution_steps:
+  - verify the caller's identity (name, birthdate, security question)
+  - unlock the account
+  - send a password reset link to the registered email
+  - confirm the caller can log in
+expected_turns: 7

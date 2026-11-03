@@ -1,0 +1,23 @@
+id: internet_down
+category: TECH_SUPPORT
+title: Home internet is down
+difficulty: 2
+languages: [en, tl, taglish]
+moods: [calm, confused, in a hurry, frustrated]
+# {placeholders} are filled from the call's customer record when the call starts.
+customer: "{full_name}, works from home for an overseas company and has had the same fiber plan for two years."
+brief: "Your home internet has been down since yesterday evening. The router lights are on but there is no connection. You need it for work and you are worried about missing a meeting."
+facts:
+  full_name: "{full_name}"
+  account_number: "{account_no}"
+  plan: "{plan}"
+  address_area: "{area}"
+  birthdate: "{birthdate}"
+  issue_started: "yesterday evening"
+  already_tried: "restarted the router twice, checked the cables"
+resolution_steps:
+  - verify the caller's identity (name, account number, birthdate)
+  - ask about the router lights and what was already tried
+  - run a line check
+  - schedule a technician visit
+expected_turns: 8

@@ -1,0 +1,13 @@
+group,part,n,mean_s,median_s,p95_s,max_s
+all,speech to text,14,1.48,1.12,2.87,4.83
+all,caller model,14,0.43,0.37,0.72,1.09
+all,voice (first sentence),14,0.95,0.89,1.46,1.54
+all,total,14,2.87,2.39,4.96,6.64
+English,speech to text,3,2.69,1.81,4.53,4.83
+English,caller model,3,0.61,0.4,1.02,1.09
+English,voice (first sentence),3,1.27,1.41,1.53,1.54
+English,total,3,4.57,4.05,6.38,6.64
+Tagalog,speech to text,11,1.15,1.04,1.68,1.77
+Tagalog,caller model,11,0.38,0.37,0.47,0.53
+Tagalog,voice (first sentence),11,0.87,0.85,1.17,1.25
+Tagalog,total,11,2.4,2.31,2.95,3.05
