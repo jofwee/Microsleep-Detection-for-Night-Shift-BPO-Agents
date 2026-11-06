@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QPointF, QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QPainter
+from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import (
     QButtonGroup, QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget,
 )
@@ -125,6 +125,55 @@ class Meter(QWidget):
         if self._ratio > 0:
             p.setBrush(QColor(theme.token("alarm" if self._alarm else "ink")))
             p.drawRoundedRect(QRectF(0, 0, max(h, w * self._ratio), h), 2, 2)
+
+
+class VoiceDot(QWidget):
+    """A small dot that says whether the microphone is open, like a voice-chat speaking ring.
+
+    wait      grey, hollow    the caller is talking or answering: the microphone is closed
+    ready     green, hollow   your turn: the microphone is open and waiting
+    speaking  green, filled with a soft halo   the microphone is picking up your voice right now
+    """
+
+    SIZE = 18
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.setFixedSize(self.SIZE, self.SIZE)
+        self._mode = "wait"
+
+    @property
+    def mode(self) -> str:
+        return self._mode
+
+    def set(self, mode: str) -> None:
+        if mode != self._mode:
+            self._mode = mode
+            self.update()
+
+    def paintEvent(self, _e) -> None:  # noqa: N802
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        c = QPointF(self.SIZE / 2, self.SIZE / 2)
+        if self._mode == "wait":
+            pen = QColor(theme.token("g300"))
+            p.setPen(QPen(pen, 1.5))
+            p.setBrush(Qt.NoBrush)
+            p.drawEllipse(c, 4.0, 4.0)
+            return
+        live = QColor(theme.token("live"))
+        if self._mode == "speaking":
+            halo = QColor(live)
+            halo.setAlphaF(0.28)
+            p.setPen(Qt.NoPen)
+            p.setBrush(halo)
+            p.drawEllipse(c, 8.0, 8.0)
+            p.setBrush(live)
+            p.drawEllipse(c, 4.5, 4.5)
+        else:  # ready
+            p.setPen(QPen(live, 1.5))
+            p.setBrush(Qt.NoBrush)
+            p.drawEllipse(c, 4.0, 4.0)
 
 
 class StatCell(QWidget):

@@ -874,3 +874,31 @@ def test_the_recheck_allows_time_for_a_quick_check(qapp):
     import controller
 
     assert controller.RECHECK_S >= 20
+
+
+# --- who may speak, and the microphone choice ---
+def test_desktop_shows_whose_turn_it_is_quietly(qapp):
+    w = DesktopWindow()
+    expect = {"caller": ("wait", "CALLER SPEAKING"), "listening": ("ready", "YOUR TURN"),
+              "hearing": ("speaking", "YOU"), "thinking": ("wait", "CALLER REPLYING")}
+    for state, (mode, word) in expect.items():
+        w.show_view(AgentView(status="ON_CALL", call_state=state))
+        assert w.voice_dot.mode == mode and w.turn_label.text() == word, state
+    assert not hasattr(w, "turn_text")  # no big banner any more
+
+
+def test_microphone_list_remembers_the_choice_and_locks_during_calls(qapp):
+    w = DesktopWindow()
+    w.set_microphones(["Headset (USB)", "Laptop mic"], "Laptop mic", "Laptop mic")
+    assert w.mic_box.currentData() == "Laptop mic" and w.mic_box.count() == 3
+    picked = []
+    w.mic_changed.connect(picked.append)
+    w.mic_box.setCurrentIndex(1)
+    w._on_mic_picked(1)
+    assert picked == ["Headset (USB)"]
+    w.show_view(AgentView(status="ON_CALL"))
+    assert not w.mic_box.isEnabled()
+    w.show_view(AgentView(status="AVAILABLE"))
+    assert w.mic_box.isEnabled()
+    w.set_microphones(["Laptop mic"], "Unplugged headset")  # a saved choice that is gone falls back to the default
+    assert w.mic_box.currentData() == ""

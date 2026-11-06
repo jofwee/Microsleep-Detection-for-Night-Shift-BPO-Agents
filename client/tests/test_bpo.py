@@ -173,6 +173,27 @@ def test_call_full_exchange_ends_when_caller_is_satisfied():
     assert "tts_ms" in api.sent[1][1]  # the previous caller line's timing is reported on the next turn
 
 
+def test_call_reports_whose_turn_it_is():
+    api = FakeApi([reply("Hello po."), reply("Bye po.", "satisfied", True)])
+    states = []
+    make_session(api, ScriptMic(SPEECH), ["Hi"], on_state=states.append).run()
+    # the caller speaks, then it is the agent's turn, the agent is heard, the answer is awaited, the caller replies
+    assert states[:2] == ["connecting", "caller"]
+    assert "listening" in states and "hearing" in states and "thinking" in states
+    assert states.index("listening") < states.index("hearing") < states.index("thinking")
+    assert states[-1] == "caller" or states[-1] == "listening"
+    assert len([a for a, b in zip(states, states[1:]) if a == b]) == 0  # only changes are reported
+
+
+def test_call_is_not_your_turn_while_the_caller_speaks():
+    seen = []
+    s = make_session(FakeApi(), ScriptMic([]))
+    s.play = lambda samples, rate: seen.append(s._state)  # the state at the moment the voice plays
+    s._say("Hello po.")
+    assert seen and set(seen) == {"caller"}
+    assert s._state == "listening"
+
+
 def test_call_mic_is_flushed_around_caller_speech():
     api = FakeApi([reply("Hello po."), reply("Bye po.", "hangup", True)])
     mic = ScriptMic(SPEECH)

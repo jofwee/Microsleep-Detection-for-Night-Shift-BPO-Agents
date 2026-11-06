@@ -72,6 +72,7 @@ class Controller(QObject):
         self.customer_text: str | None = None
         self._checking = False  # the Go-available re-check is running: the camera is on while still Not ready
         self._in_call = False
+        self.call_state = ""  # what the live call is doing (see bpo.call_session.STATES); empty outside a call
         self._end_flag = False
         self._lost = False
         self._prompting = False
@@ -161,6 +162,11 @@ class Controller(QObject):
             self.refresh_requested.emit()
         return wrapped
 
+    def set_call_state(self, state: str) -> None:
+        """Called from the call thread; the window picks it up on the next poll."""
+        self.call_state = state
+        self.refresh_requested.emit()
+
     # --- what the monitor thread tells us ------------------------------------------------------
     def on_monitor_event(self, event: Event) -> None:
         self.event_counts[event.type.value] += 1
@@ -188,6 +194,7 @@ class Controller(QObject):
             status=status, reason=last.get("reason"), name=self.name,
             camera_on=self.runner.running, fatigue=snap.fatigue if snap else "ALERT",
             lock_status=snap.lock_status if snap else None,
+            call_state=self.call_state if self._in_call else "",
             queued=self.queue.count(), sync=getattr(self.uploader, "state", "empty"),
             offer_seconds=seconds, message=self.message, transcript=list(self.transcript),
             customer_text=self.customer_text,
@@ -305,6 +312,7 @@ class Controller(QObject):
                     self.desk.end_call(call_id)
             finally:
                 self._in_call = False
+                self.call_state = ""
 
         self._async(self._safely(work))
 

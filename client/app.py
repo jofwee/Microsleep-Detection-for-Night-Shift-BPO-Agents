@@ -18,6 +18,7 @@ from PySide6.QtWidgets import QApplication, QInputDialog, QMessageBox
 
 from auth import face_mfa, login, workstation
 from auth.supabase_client import Api, ApiError
+from bpo.audio import devices as audio_devices
 from bpo.audio.io import Microphone, Speaker
 from bpo.audio.stt import Transcriber
 from bpo.audio.tts import EdgeTtsSynthesizer
@@ -238,12 +239,28 @@ class App(QObject):
         runner = MonitorRunner(make_core, lambda: Camera(None))
 
         def run_call(call_id, on_turn, end_requested):
-            with Microphone() as mic:
+            number = audio_devices.device_number(audio_devices.saved_name())  # None = the system default
+            try:
+                mic = Microphone(number).__enter__()
+            except Exception:  # noqa: BLE001 - the chosen microphone vanished or refused: fall back to the default
+                mic = Microphone().__enter__()
+            try:
                 speaker = Speaker(mic)
                 session = CallSession(self.api, call_id, mic, Transcriber(self.api), EdgeTtsSynthesizer(),
                                       lambda samples, rate: speaker.play(samples, rate, cancel=end_requested),
-                                      end_requested=end_requested, on_turn=on_turn)
+                                      end_requested=end_requested, on_turn=on_turn,
+                                      on_state=lambda s: holder["c"].set_call_state(s))
                 return session.run()
+            finally:
+                mic.__exit__(None, None, None)
+
+        def fill_microphones() -> None:
+            window.set_microphones([n for _, n in audio_devices.input_devices()], audio_devices.saved_name(),
+                                   audio_devices.default_input_name())
+
+        fill_microphones()
+        window.mic_refresh.connect(fill_microphones)
+        window.mic_changed.connect(lambda name: audio_devices.save_name(name or None))
 
         controller = holder["c"] = Controller(desk, runner, window, tray, alert, queue, uploader, run_call, self.account.full_name)
         heartbeat = HeartbeatThread(

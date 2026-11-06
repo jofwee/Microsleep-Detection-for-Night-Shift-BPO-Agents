@@ -13,7 +13,7 @@ import numpy as np
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
-    QApplication, QHBoxLayout, QLabel, QLineEdit, QListWidget, QPlainTextEdit, QPushButton, QScrollArea, QStackedWidget,
+    QApplication, QComboBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QPlainTextEdit, QPushButton, QScrollArea, QStackedWidget,
     QVBoxLayout, QWidget,
 )
 
@@ -21,10 +21,18 @@ from bpo.shift import ShiftStats
 from monitor.core import Readings
 
 from . import theme
-from .widgets import Chip, Meter, MicroLabel, StatGrid, ThemeSwitch, card, hair, label, retone, section
+from .widgets import Chip, Meter, MicroLabel, StatGrid, ThemeSwitch, VoiceDot, card, hair, label, retone, section
 from .window import standard_window
 
 ALARM_EVENTS = ("MICROSLEEP", "IDENTITY_MISMATCH")  # the only things that are red
+# the quiet "can I speak?" indicator: (dot mode, tiny label). The dot lights up while the microphone hears you.
+TURN = {
+    "connecting": ("wait", "connecting"),
+    "caller": ("wait", "caller speaking"),
+    "listening": ("ready", "your turn"),
+    "hearing": ("speaking", "you"),
+    "thinking": ("wait", "caller replying"),
+}
 DIM, GOOD = 75, 105  # face brightness out of 255: below DIM the real-face check gets unreliable
 
 
@@ -43,6 +51,7 @@ class AgentView:
     transcript: list[tuple[str, str]] = field(default_factory=list)  # (speaker, text)
     customer_text: str | None = None
     prompt: str | None = None  # a quick live check the agent is asked to do right now
+    call_state: str = ""  # connecting | caller | listening | hearing | thinking, or "" outside a call
     shift_seconds: int = 0
     shift: ShiftStats = field(default_factory=ShiftStats)
     counts: dict[str, int] = field(default_factory=dict)  # fatigue events this shift, by type
@@ -98,6 +107,8 @@ class DesktopWindow(QWidget):
     lookup = Signal(str)
     finish = Signal(str, str)  # disposition, notes
     theme_changed = Signal(str)
+    mic_changed = Signal(str)  # the chosen microphone's name; "" means the system default
+    mic_refresh = Signal()
 
     PAGES = ("idle", "ringing", "call", "wrap", "hold")
     PREVIEW_SIZE = (340, 255)
@@ -264,6 +275,22 @@ class DesktopWindow(QWidget):
         self.metrics_note.setWordWrap(True)
         cl2.addWidget(self.metrics_note)
         lay.addWidget(c2)
+        lay.addSpacing(36)
+
+        lay.addWidget(section(3, "your microphone"))
+        lay.addSpacing(14)
+        c3, cl3 = card()
+        self.mic_box = QComboBox()
+        self.mic_box.activated.connect(self._on_mic_picked)
+        refresh = QPushButton("Refresh list")
+        refresh.clicked.connect(self.mic_refresh)
+        self.mic_note = QLabel("Used for calls. Change it before a call starts; a call in progress keeps its microphone.")
+        self.mic_note.setObjectName("muted")
+        self.mic_note.setWordWrap(True)
+        cl3.addWidget(self.mic_box)
+        cl3.addWidget(refresh, alignment=Qt.AlignLeft)
+        cl3.addWidget(self.mic_note)
+        lay.addWidget(c3)
         lay.addStretch(1)
         side.addWidget(holder)
         side.addStretch(1)
@@ -351,6 +378,11 @@ class DesktopWindow(QWidget):
         top = QHBoxLayout()
         top.addWidget(label("Conversation"))
         top.addStretch()
+        self.voice_dot = VoiceDot()
+        self.turn_label = MicroLabel(TURN["connecting"][1])
+        top.addWidget(self.voice_dot)
+        top.addWidget(self.turn_label)
+        top.addSpacing(14)
         end = QPushButton("End call")
         end.setObjectName("danger")
         end.clicked.connect(self.end_call)
@@ -361,7 +393,7 @@ class DesktopWindow(QWidget):
         self.transcript.setMinimumHeight(260)
         self.transcript.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         cl.addWidget(self.transcript, 1)
-        hint = QLabel("Speak to the caller. Use a headset: the microphone pauses while they talk.")
+        hint = QLabel("Speak when the dot is green. Use a headset: the microphone pauses while the caller talks.")
         hint.setObjectName("muted")
         hint.setWordWrap(True)
         cl.addWidget(hint)
@@ -435,6 +467,23 @@ class DesktopWindow(QWidget):
         self._disposition = key
         for k, b in self.dispo_buttons.items():
             b.setChecked(k == key)
+
+    # --- the microphone ------------------------------------------------------------------------------------------
+    def set_microphones(self, names: list[str], selected: str | None, default_name: str | None = None) -> None:
+        """Fill the list. The first entry is the system default; `selected` is the saved choice (if it is still plugged in)."""
+        self.mic_box.blockSignals(True)
+        self.mic_box.clear()
+        self.mic_box.addItem(f"System default ({default_name})" if default_name else "System default", "")
+        for name in names:
+            self.mic_box.addItem(name, name)
+        index = self.mic_box.findData(selected or "")
+        self.mic_box.setCurrentIndex(index if index >= 0 else 0)
+        self.mic_box.blockSignals(False)
+        if not names:
+            self.mic_note.setText("No microphone found. Plug in a headset and press Refresh list.")
+
+    def _on_mic_picked(self, _index: int) -> None:
+        self.mic_changed.emit(self.mic_box.currentData() or "")
 
     # --- the camera picture -----------------------------------------------------------------------------------
     def show_frame(self, frame_bgr: np.ndarray) -> None:
@@ -522,6 +571,9 @@ class DesktopWindow(QWidget):
         elif page == 1:
             self.ring_time.setText("" if v.offer_seconds is None else f"{max(v.offer_seconds, 0)} s to answer")
         elif page == 2:
+            mode, word = TURN.get(v.call_state, TURN["connecting"])
+            self.voice_dot.set(mode)
+            self.turn_label.setText(word)
             self.set_transcript(v.transcript)
             self.call_customer.setText(v.customer_text or "")
         elif page == 3:
@@ -531,6 +583,7 @@ class DesktopWindow(QWidget):
                 self.notes.clear()
         elif page == 4:
             self.hold_why.setText(v.reason or "The monitor stopped you for a moment.")
+        self.mic_box.setEnabled(page != 2)  # a call in progress keeps the microphone it started with
 
         s = v.shift
         self.shift_grid.set(0, str(s.calls), "finished this shift")

@@ -20,7 +20,8 @@ from .audio.tts import Synthesizer, speak
 from .audio.vad import UtteranceDetector
 
 
-END_SILENCE_MS = 500  # how long the agent must be quiet before the caller answers; 700 felt slow, 400 cuts people off
+STATES = ("connecting", "caller", "listening", "hearing", "thinking")  # what the call is doing right now
+END_SILENCE_MS = 500 # how long the agent must be quiet before the caller answers; 700 felt slow, 400 cuts people off
 
 
 class Mic(Protocol):
@@ -66,6 +67,7 @@ class CallSession:
         max_silences: int = 3,
         log: Callable[[str], None] = print,
         on_turn: Callable[[str, str], None] | None = None,
+        on_state: Callable[[str], None] | None = None,
     ) -> None:
         self.api, self.call_id, self.mic = api, call_id, mic
         self.transcriber, self.synth, self.play = transcriber, synth, play
@@ -73,10 +75,18 @@ class CallSession:
         self.now, self.end_requested = now, end_requested
         self.silence_after_s, self.max_silences, self.log = silence_after_s, max_silences, log
         self.on_turn = on_turn  # (speaker, text), for a window that shows the conversation
+        self.on_state = on_state  # one of STATES, for the "can I speak now?" indicator
+        self._state = ""
         self._ended = False
         self.language = "taglish"
         self._tts_ms: int | None = None  # how long the previous caller line took to start, reported on the next turn
         self.outcome = CallOutcome("server")
+
+    def _set_state(self, state: str) -> None:
+        if state != self._state:
+            self._state = state
+            if self.on_state:
+                self.on_state(state)
 
     # --- server and voice -------------------------------------------------------------------
     def _turn(self, fields: dict) -> dict:
@@ -109,14 +119,17 @@ class CallSession:
         if self.on_turn:
             self.on_turn("caller", text)
         self.mic.flush()
+        self._set_state("caller")
         first_ms = speak(text, self.language, self.synth, self.play, cancelled=self._ending)
         self.mic.flush()
         self._tts_ms = first_ms
+        self._set_state("listening")  # the caller finished: the agent may speak
         return first_ms
 
     # --- the loop ---------------------------------------------------------------------------
     def run(self) -> CallOutcome:
         try:
+            self._set_state("connecting")
             self._run()
         except ApiError as exc:
             if exc.code in ("call_not_active", "call_not_found"):
@@ -150,6 +163,8 @@ class CallSession:
                 return
             frame = self.mic.read(0.1)
             utterance = self.detector.feed(frame) if frame is not None else None
+            if utterance is None and self._state in ("listening", "hearing"):
+                self._set_state("hearing" if self.detector.in_speech else "listening")
 
             if utterance is None:
                 quiet_for = self.now() - last_caller_end
@@ -167,8 +182,10 @@ class CallSession:
 
             # the agent finished a sentence
             t_end = self.now()
+            self._set_state("thinking")
             text, stt_ms = self.transcriber.transcribe(self.call_id, utterance)
             if not text:
+                self._set_state("listening")
                 continue  # a cough or a click: nothing recognised
             self.log(f"  you   : {text}")
             if self.on_turn:
