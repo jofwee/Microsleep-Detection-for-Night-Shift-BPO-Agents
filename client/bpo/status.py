@@ -30,6 +30,7 @@ class AgentDesk:
                 pass
 
     def sign_in_ready(self) -> None:
+        self.heartbeat("OFF", False, "ALERT")
         self.api.rpc("set_status", {"p_status": "NOT_READY", "p_reason": "signed in"})
         self._now("NOT_READY", "signed in")
 
@@ -91,6 +92,9 @@ class HeartbeatThread(threading.Thread):
         try:
             state, identity_ok, fatigue = self.monitor()
             result = self.desk.heartbeat(state, identity_ok, fatigue)
+            if result.get("status") == "OFFLINE" and result.get("reason") != "signed out":
+                self.desk.sign_in_ready()
+                result = self.desk.last
             self.failures = 0
             return result
         except ApiError as exc:

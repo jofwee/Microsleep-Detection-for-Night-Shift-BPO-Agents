@@ -518,7 +518,7 @@ class DesktopWindow(QWidget):
             }.get(v.status, ""))
             self.btn_available.setEnabled(v.status == "NOT_READY")
             self.btn_break.setEnabled(v.status == "AVAILABLE")
-            self.btn_signout.setEnabled(v.status in ("NOT_READY", "AVAILABLE"))
+            self.btn_signout.setEnabled(v.status in ("NOT_READY", "AVAILABLE", "OFFLINE"))
         elif page == 1:
             self.ring_time.setText("" if v.offer_seconds is None else f"{max(v.offer_seconds, 0)} s to answer")
         elif page == 2:
