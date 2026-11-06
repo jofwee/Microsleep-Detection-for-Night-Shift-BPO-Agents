@@ -258,17 +258,26 @@ select is((select status::text from public.calls where id = 'ca000000-0000-0000-
 
 -- ============================================================================ 7. silent agents and lost face checks
 update public.calls set status = 'ABANDONED' where status in ('QUEUED', 'OFFERED') and team_id = 'aa000000-0000-0000-0000-000000000001';
-select pg_temp.set_agent('a0000000-0000-0000-0000-000000000011', 'aa000000-0000-0000-0000-000000000001', 'AVAILABLE', p_hb => '2 minutes');
+select pg_temp.set_agent('a0000000-0000-0000-0000-000000000011', 'aa000000-0000-0000-0000-000000000001', 'AVAILABLE', p_hb => '2 minutes', p_since => '3 minutes');
 select pg_temp.set_agent('a0000000-0000-0000-0000-000000000012', 'aa000000-0000-0000-0000-000000000001', 'NOT_READY');
 update public.face_verifications set revoked_at = now() where agent_id = 'a0000000-0000-0000-0000-000000000012';
 select pg_temp.set_agent('a0000000-0000-0000-0000-000000000013', 'aa000000-0000-0000-0000-000000000001', 'ON_CALL');
 update public.calls set status = 'ACTIVE', agent_id = 'a0000000-0000-0000-0000-000000000013' where id = 'ca000000-0000-0000-0000-000000000009';
-update public.agent_status set current_call_id = 'ca000000-0000-0000-0000-000000000009', last_heartbeat_at = now() - interval '2 minutes' where agent_id = 'a0000000-0000-0000-0000-000000000013';
+update public.agent_status set current_call_id = 'ca000000-0000-0000-0000-000000000009', last_heartbeat_at = now() - interval '2 minutes', status_since = now() - interval '3 minutes' where agent_id = 'a0000000-0000-0000-0000-000000000013';
 select private.sweep_calls();
 select is((select status::text || '/' || reason from public.agent_status where agent_id = 'a0000000-0000-0000-0000-000000000011'), 'OFFLINE/heartbeat lost', 'an agent whose app went silent is OFFLINE');
 select is((select status::text || '/' || end_reason from public.calls where id = 'ca000000-0000-0000-0000-000000000009'), 'COMPLETED/agent_lost', 'a call whose agent vanished is closed as agent_lost');
 select is((select status::text || '/' || reason from public.agent_status where agent_id = 'a0000000-0000-0000-0000-000000000012'), 'OFFLINE/face check no longer valid', 'an agent whose face check was revoked goes OFFLINE');
 update public.face_verifications set revoked_at = null where agent_id = 'a0000000-0000-0000-0000-000000000012';
+
+-- a fresh sign-in after a long gap: the old session's heartbeat (2 minutes ago) must not count against the new status
+select pg_temp.set_agent('a0000000-0000-0000-0000-000000000011', 'aa000000-0000-0000-0000-000000000001', 'NOT_READY', p_monitor => 'OFF', p_identity => false, p_hb => '2 minutes', p_since => '2 seconds');
+select private.sweep_calls();
+select is((select status::text from public.agent_status where agent_id = 'a0000000-0000-0000-0000-000000000011'), 'NOT_READY', 'a fresh sign-in is not marked OFFLINE because of the previous session''s old heartbeat');
+-- ...but if no heartbeat ever arrives, it is marked OFFLINE once the status itself is a minute old
+select pg_temp.set_agent('a0000000-0000-0000-0000-000000000011', 'aa000000-0000-0000-0000-000000000001', 'NOT_READY', p_monitor => 'OFF', p_identity => false, p_hb => '2 minutes', p_since => '90 seconds');
+select private.sweep_calls();
+select is((select status::text || '/' || reason from public.agent_status where agent_id = 'a0000000-0000-0000-0000-000000000011'), 'OFFLINE/heartbeat lost', 'a sign-in that never sends a heartbeat is still marked OFFLINE after 60 s');
 
 -- ============================================================================ 8. customer lookup
 select pg_temp.set_agent('a0000000-0000-0000-0000-000000000011', 'aa000000-0000-0000-0000-000000000001', 'ON_CALL');
